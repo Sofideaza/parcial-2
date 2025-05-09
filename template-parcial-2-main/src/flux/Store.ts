@@ -1,34 +1,62 @@
-import { AppDispatcher, Action } from './Dispatcher';
-
-export type State = {};
-
-type Listener = (state: State) => void;
-
-class Store {
-    private _myState: State = {}
-
-    private _listeners: Listener[] = [];
-
-    constructor() {
-        AppDispatcher.register(this._handleActions.bind(this));
-    }
-
+export interface Plant {
+    id: string;
+    name: string;
+    scientificName: string;
+    image: string;
+  }
+  
+  interface GardenState {
+    page: 'home' | 'modify' | 'admin';
+    gardenName: string;
+    gardenPlants: string[];
+    allPlants: Plant[];
+  }
+  
+  class Store {
+    private state: GardenState = {
+      page: 'home',
+      gardenName: 'Mi Jardín',
+      gardenPlants: [],
+      allPlants: [
+        { id: '1', name: 'Rosal', scientificName: 'Rosa spp.', image: 'https://via.placeholder.com/100' },
+        { id: '2', name: 'Helecho', scientificName: 'Nephrolepis exaltata', image: 'https://via.placeholder.com/100' }
+      ]
+    };
+  
     getState() {
-        return {};
+      return this.state;
     }
-
-    _handleActions(action: Action): void {
-        switch (action.type) {
-            case "UNO":
-                break;
-        }
+  
+    setPage(page: GardenState['page']) {
+      this.state.page = page;
+      this.emit();
     }
-
-    private _emitChange(): void {
-        for (const listener of this._listeners) { }
+  
+    togglePlantInGarden(id: string) {
+      const idx = this.state.gardenPlants.indexOf(id);
+      if (idx >= 0) this.state.gardenPlants.splice(idx, 1);
+      else this.state.gardenPlants.push(id);
+      this.emit();
     }
-
-    unsubscribe(listener: Listener): void { }
-}
-
-export const store = new Store();
+  
+    renameGarden(name: string) {
+      this.state.gardenName = name;
+      this.emit();
+    }
+  
+    editPlant(plant: Plant) {
+      const index = this.state.allPlants.findIndex(p => p.id === plant.id);
+      if (index !== -1) {
+        this.state.allPlants[index] = plant;
+        this.emit();
+      }
+    }
+  
+    private emit() {
+      window.dispatchEvent(new Event('stateChange'));
+    }
+  }
+  
+  export const store = new Store();
+  (window as any).store = store;
+  
